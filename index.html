@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fast & Free GUID / UUID Generator (v4, v7, Nil)</title>
+    <meta name="description" content="Generate cryptographically secure UUID v4, timestamp-ordered UUID v7, and Microsoft GUIDs instantly in your browser. 100% client-side and private.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
+
+    <main class="max-w-2xl w-full bg-slate-900 rounded-2xl shadow-2xl border border-slate-800 p-6 md:p-8">
+        
+        <!-- Header -->
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-white mb-2 tracking-tight">GUID / UUID Generator</h1>
+            <p class="text-slate-400 text-sm">Cryptographically secure, instant, and generated 100% in your browser.</p>
+        </header>
+
+        <!-- Options Bar -->
+        <section aria-label="Generator Options" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+            
+            <!-- Version Selector -->
+            <div>
+                <label for="version" class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Version / Type</label>
+                <select id="version" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="v4" selected>UUID v4 (Random)</option>
+                    <option value="v7">UUID v7 (Time-ordered)</option>
+                    <option value="nil">Nil / Empty GUID</option>
+                </select>
+            </div>
+
+            <!-- Quantity Selector -->
+            <div>
+                <label for="count" class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Quantity</label>
+                <select id="count" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="1">1 GUID</option>
+                    <option value="5">5 GUIDs</option>
+                    <option value="10" selected>10 GUIDs</option>
+                    <option value="25">25 GUIDs</option>
+                    <option value="50">50 GUIDs</option>
+                </select>
+            </div>
+
+            <!-- Formatting Toggles -->
+            <div class="sm:col-span-2 flex flex-wrap gap-6 pt-2 border-t border-slate-800/80">
+                <label class="inline-flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" id="uppercase" class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500">
+                    <span class="text-sm font-medium text-slate-300">Uppercase</span>
+                </label>
+
+                <label class="inline-flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" id="hyphens" checked class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500">
+                    <span class="text-sm font-medium text-slate-300">Hyphens (-)</span>
+                </label>
+
+                <label class="inline-flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" id="braces" class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500">
+                    <span class="text-sm font-medium text-slate-300">Braces { }</span>
+                </label>
+            </div>
+        </section>
+
+        <!-- Output Textarea -->
+        <div class="relative mb-6">
+            <label for="output" class="sr-only">Generated GUIDs output</label>
+            <textarea 
+                id="output" 
+                readonly 
+                rows="8" 
+                aria-label="Generated GUIDs"
+                class="w-full bg-slate-950 text-emerald-400 font-mono text-sm p-4 pr-28 rounded-xl border border-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-y selection:bg-indigo-500 selection:text-white leading-relaxed"
+            ></textarea>
+            
+            <button 
+                id="copyBtn" 
+                type="button"
+                aria-live="polite"
+                class="absolute top-3 right-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs py-2 px-3.5 rounded-lg transition-all flex items-center gap-1.5 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-950 focus:ring-indigo-500"
+            >
+                <span id="copyBtnText">Copy All</span>
+            </button>
+        </div>
+
+        <!-- Primary Action Button -->
+        <button 
+            id="generateBtn" 
+            type="button"
+            class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-indigo-600/25 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-indigo-500"
+        >
+            Generate New GUIDs
+        </button>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-8 text-center text-xs text-slate-500 space-y-1">
+        <p>100% Client-Side & Private • Your generated IDs never leave your browser</p>
+        <p class="text-slate-600">Supports RFC 4122 (v4) & RFC 9562 (v7)</p>
+    </footer>
+
+    <!-- JS Logic with Fallbacks -->
+    <script>
+        // Secure random bytes helper
+        function getRandomBytes(length) {
+            const bytes = new Uint8Array(length);
+            if (window.crypto && window.crypto.getRandomValues) {
+                window.crypto.getRandomValues(bytes);
+            } else {
+                // Fallback for very old environments
+                for (let i = 0; i < length; i++) {
+                    bytes[i] = Math.floor(Math.random() * 256);
+                }
+            }
+            return bytes;
+        }
+
+        // UUID v4 Generator with fallback
+        function generateUUIDv4() {
+            if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+                return window.crypto.randomUUID();
+            }
+            const bytes = getRandomBytes(16);
+            bytes[6] = (bytes[6] & 0x0f) | 0x40; // Version 4
+            bytes[8] = (bytes[8] & 0x3f) | 0x80; // Variant 10
+            return formatBytesToUUID(bytes);
+        }
+
+        // UUID v7 Generator (RFC 9562 - Unix Timestamp ms + Random)
+        function generateUUIDv7() {
+            const bytes = getRandomBytes(16);
+            const timestamp = Date.now();
+
+            // 48-bit big-endian timestamp
+            bytes[0] = (timestamp / 0x10000000000) & 0xff;
+            bytes[1] = (timestamp / 0x100000000) & 0xff;
+            bytes[2] = (timestamp / 0x1000000) & 0xff;
+            bytes[3] = (timestamp / 0x10000) & 0xff;
+            bytes[4] = (timestamp / 0x100) & 0xff;
+            bytes[5] = timestamp & 0xff;
+
+            bytes[6] = (bytes[6] & 0x0f) | 0x70; // Version 7
+            bytes[8] = (bytes[8] & 0x3f) | 0x80; // Variant 10
+
+            return formatBytesToUUID(bytes);
+        }
+
+        function formatBytesToUUID(bytes) {
+            const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+            return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+        }
+
+        function generateGUIDs() {
+            const version = document.getElementById('version').value;
+            const count = parseInt(document.getElementById('count').value, 10);
+            const isUppercase = document.getElementById('uppercase').checked;
+            const useHyphens = document.getElementById('hyphens').checked;
+            const useBraces = document.getElementById('braces').checked;
+            
+            const results = [];
+            for (let i = 0; i < count; i++) {
+                let uuid = '';
+                if (version === 'v4') {
+                    uuid = generateUUIDv4();
+                } else if (version === 'v7') {
+                    uuid = generateUUIDv7();
+                } else {
+                    uuid = '00000000-0000-0000-0000-000000000000';
+                }
+
+                if (!useHyphens) {
+                    uuid = uuid.replace(/-/g, '');
+                }
+                if (isUppercase) {
+                    uuid = uuid.toUpperCase();
+                }
+                if (useBraces) {
+                    uuid = `{${uuid}}`;
+                }
+                results.push(uuid);
+            }
+            
+            document.getElementById('output').value = results.join('\n');
+        }
+
+        // Robust Copy to Clipboard with Fallback
+        async function copyToClipboard() {
+            const output = document.getElementById('output');
+            const copyBtn = document.getElementById('copyBtn');
+            const copyBtnText = document.getElementById('copyBtnText');
+            const text = output.value;
+
+            if (!text) return;
+
+            let success = false;
+
+            // Modern Clipboard API
+            if (navigator.clipboard && window.isSecureContext) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    success = true;
+                } catch (err) {
+                    console.warn('Clipboard API failed, trying fallback...', err);
+                }
+            }
+
+            // Fallback method using execCommand
+            if (!success) {
+                try {
+                    output.select();
+                    output.setSelectionRange(0, 99999);
+                    success = document.execCommand('copy');
+                    window.getSelection().removeAllRanges();
+                } catch (err) {
+                    console.error('Fallback copy failed:', err);
+                }
+            }
+
+            // Visual & Accessible Feedback
+            if (success) {
+                copyBtnText.textContent = 'Copied!';
+                copyBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-500');
+                copyBtn.classList.add('bg-emerald-600');
+            } else {
+                copyBtnText.textContent = 'Copy Failed';
+                copyBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-500');
+                copyBtn.classList.add('bg-rose-600');
+            }
+
+            setTimeout(() => {
+                copyBtnText.textContent = 'Copy All';
+                copyBtn.classList.remove('bg-emerald-600', 'bg-rose-600');
+                copyBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-500');
+            }, 1800);
+        }
+
+        // Event Listeners
+        document.getElementById('generateBtn').addEventListener('click', generateGUIDs);
+        document.getElementById('version').addEventListener('change', generateGUIDs);
+        document.getElementById('count').addEventListener('change', generateGUIDs);
+        document.getElementById('uppercase').addEventListener('change', generateGUIDs);
+        document.getElementById('hyphens').addEventListener('change', generateGUIDs);
+        document.getElementById('braces').addEventListener('change', generateGUIDs);
+        document.getElementById('copyBtn').addEventListener('click', copyToClipboard);
+
+        // Initial generation
+        generateGUIDs();
+    </script>
+</body>
+</html>
